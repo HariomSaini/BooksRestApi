@@ -90,7 +90,7 @@ func getBook(w http.ResponseWriter, r *http.Request) {
 	rows := db.QueryRow("select * from books where id = $1", params["id"])
 	err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Year)
 	logFatal(err)
-	json.NewEncoder(w).Encode(&book)
+	log.Println(json.NewEncoder(w).Encode(&book))
 }
 
 // func addBook(w http.ResponseWriter, r *http.Request) {
@@ -124,13 +124,12 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 	var book Book
 
 	json.NewDecoder(r.Body).Decode(&book)
-	db.Exec("update books set title=$1, author=$2, year=$3 where id= $4 returning id", &book)
-	for i, item := range books {
-		if item.ID == book.ID {
-			books[i] = book
-		}
-	}
-	json.NewEncoder(w).Encode(books)
+	results, err := db.Exec("update books set title=$1, author=$2, year=$3 where id= $4 returning id", &book.Title, &book.Author, &book.Year, &book.ID)
+	rowsUpdated, err := results.RowsAffected()
+	logFatal(err)
+
+	json.NewEncoder(w).Encode(rowsUpdated)
+	log.Println(rowsUpdated)
 }
 func removeBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
