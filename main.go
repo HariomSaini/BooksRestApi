@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
-	"strconv"
 
 	"github.com/lib/pq"
 
@@ -131,16 +129,25 @@ func updateBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rowsUpdated)
 	log.Println(rowsUpdated)
 }
+
+// func removeBook(w http.ResponseWriter, r *http.Request) {
+// 	params := mux.Vars(r)
+// 	id, _ := strconv.Atoi(params["id"])
+// 	log.Println(reflect.TypeOf(id))
+// 	for i, item := range books {
+// 		if item.ID == id {
+// 			books = append(books[:i], books[i+1:]...)
+// 		}
+// 	}
+// 	json.NewEncoder(w).Encode(books)
+// }
 func removeBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	id, _ := strconv.Atoi(params["id"])
-	log.Println(reflect.TypeOf(id))
-	for i, item := range books {
-		if item.ID == id {
-			books = append(books[:i], books[i+1:]...)
-		}
-	}
-	json.NewEncoder(w).Encode(books)
+	results, err := db.Exec("delete from books where id=$1", params["id"])
+	logFatal(err)
+	rowsDELETED, err := results.RowsAffected()
+	log.Println(rowsDELETED)
+	json.NewEncoder(w).Encode(rowsDELETED)
 }
 
 func logFatal(err error) {
